@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scratch Achievements</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #1a202c;
+            color: #e2e8f0;
+        }
+        .tooltip {
+            visibility: hidden;
+            background-color: #2d3748;
+            color: #e2e8f0;
+            text-align: center;
+            border-radius: 6px;
+            padding: 8px 12px;
+            position: absolute;
+            z-index: 10;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            white-space: nowrap;
+            transition: opacity 0.3s, transform 0.3s;
+            opacity: 0;
+            pointer-events: none;
+        }
+        .tooltip::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #2d3748 transparent transparent transparent;
+        }
+        .relative-container:hover .tooltip {
+            visibility: visible;
+            opacity: 1;
+            transform: translateX(-50%) translateY(-10px);
+        }
+        .achievement-icon {
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            cursor: pointer;
+        }
+        .achievement-icon:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.4);
+        }
+    </style>
+</head>
+<body class="p-6 md:p-12">
+    <div class="max-w-4xl mx-auto bg-gray-800 rounded-3xl shadow-2xl p-6 md:p-10 border border-gray-700">
+        <header class="text-center mb-10">
+            <h1 class="text-3xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-500 mb-2">
+                Scratch Achievements
+            </h1>
+            <p class="text-sm md:text-base text-gray-400">View your achievements and points from a public JSON file.</p>
+        </header>
+
+        <div class="flex flex-col md:flex-row items-center justify-center space-y-4 md:space-y-0 md:space-x-4 mb-8">
+            <input type="text" id="username-input" placeholder="Enter Scratch username"
+                   class="w-full md:w-auto p-3 rounded-lg bg-gray-700 text-gray-200 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-600 transition-all duration-300">
+            <button id="check-btn" class="w-full md:w-auto px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md transition-all duration-300 transform hover:scale-105">
+                Check Achievements
+            </button>
+        </div>
+        
+        <div id="status-message" class="text-center text-red-400 font-medium mb-4"></div>
+
+        <div id="content-container" class="mt-8 hidden">
+            <div class="flex items-center justify-between bg-gray-700 rounded-xl p-4 md:p-6 mb-8 border border-gray-600">
+                <h2 class="text-xl md:text-2xl font-semibold text-gray-200">
+                    <span id="current-user-display"></span>'s Points
+                </h2>
+                <div class="flex items-center space-x-2">
+                    <span id="point-count" class="text-2xl md:text-4xl font-bold text-blue-400">0</span>
+                </div>
+            </div>
+
+            <h3 class="text-xl md:text-2xl font-semibold text-gray-200 mb-4">Achievements</h3>
+            <div id="achievements-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                <!-- Achievement icons will be dynamically inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Use a variable to hold the parsed JSON data
+        let achievementsData = null;
+
+        // The URL for the achievements JSON file.
+        const ACHIEVEMENTS_URL = 'https://scratch-achievements.vercel.app/achievementsuser.json';
+
+        // --- DOM Elements ---
+        const usernameInput = document.getElementById('username-input');
+        const checkBtn = document.getElementById('check-btn');
+        const statusMessage = document.getElementById('status-message');
+        const contentContainer = document.getElementById('content-container');
+        const currentUserDisplay = document.getElementById('current-user-display');
+        const pointCount = document.getElementById('point-count');
+        const achievementsContainer = document.getElementById('achievements-container');
+
+        // Initial fetch to get the JSON data
+        async function fetchAchievementsData() {
+            statusMessage.textContent = 'Fetching data...';
+            checkBtn.disabled = true; // Disable button while fetching
+            try {
+                const response = await fetch(ACHIEVEMENTS_URL);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                achievementsData = await response.json();
+                statusMessage.textContent = 'Data fetched successfully.';
+            } catch (error) {
+                console.error("Error fetching data:", error);
+                statusMessage.textContent = 'Failed to fetch achievement data.';
+            } finally {
+                checkBtn.disabled = false; // Re-enable button
+            }
+        }
+
+        // --- Functions ---
+        
+        function displayUserAchievements(user) {
+            if (!user) {
+                statusMessage.textContent = "This user hasn't been added yet, you can request it by commenting on alboxer2000's profile";
+                contentContainer.classList.add('hidden');
+                return;
+            }
+
+            // Calculate total points
+            const totalPoints = user.achievements.reduce((sum, achievement) => sum + achievement.points, 0);
+
+            statusMessage.textContent = '';
+            contentContainer.classList.remove('hidden');
+            currentUserDisplay.textContent = usernameInput.value;
+            pointCount.textContent = totalPoints;
+            
+            // Clear existing achievements
+            achievementsContainer.innerHTML = '';
+            
+            // Render achievements
+            user.achievements.forEach(achievement => {
+                const iconContainer = document.createElement('div');
+                iconContainer.className = 'relative-container w-24 h-24 sm:w-28 sm:h-28 flex items-center justify-center';
+
+                const iconImg = document.createElement('img');
+                iconImg.src = achievement.icon;
+                iconImg.alt = achievement.title;
+                iconImg.className = 'achievement-icon w-full h-full p-2 bg-gray-700 rounded-3xl shadow-lg border-2 border-transparent hover:border-blue-500 transition-all duration-300';
+                
+                const tooltip = document.createElement('div');
+                tooltip.className = 'tooltip';
+                tooltip.innerHTML = `<p class="font-bold">${achievement.title}</p><p class="text-xs mt-1 max-w-xs">${achievement.description}</p><p class="text-sm mt-2 font-semibold text-blue-300">${achievement.points} Points</p>`;
+                
+                iconContainer.appendChild(iconImg);
+                iconContainer.appendChild(tooltip);
+                achievementsContainer.appendChild(iconContainer);
+            });
+        }
+
+        // --- Event Listeners ---
+        checkBtn.addEventListener('click', () => {
+            const username = usernameInput.value.trim();
+            if (username === '') {
+                statusMessage.textContent = 'Please enter a username.';
+                return;
+            }
+            const user = achievementsData[username];
+            displayUserAchievements(user);
+        });
+
+        // --- Initial Call ---
+        fetchAchievementsData();
+    </script>
+</body>
+</html>
