@@ -1,0 +1,39 @@
+{
+   "user1":{
+      "achievements":[
+         {
+            "icon":"data:image/svg+xml;base64,...",
+            "title":"First Step",
+            "description":"You've successfully checked your achievements.",
+            "points":10
+         },
+         {
+            "icon":"data:image/svg+xml;base64,...",
+            "title":"First Points",
+            "description":"You've earned your first point on the dashboard!",
+            "points":5
+         }
+      ]
+   },
+   "testuser":{
+      "achievements":[
+         {
+            "icon":"data:image/svg+xml;base64,...",
+            "title":"Master Coder",
+            "description":"Write a program that is so complex, it solves world hunger.",
+            "points":25
+         },
+         {
+            "icon":"data:image/svg+xml;base64,...",
+            "title":"Community Contributor",
+            "description":"Contribute to a public project and get featured.",
+            "points":15
+         }
+      ]
+   },
+   "anotheruser":{
+      "achievements":[
+         
+      ]
+   }
+}
